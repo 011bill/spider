@@ -23,6 +23,7 @@ from baiduspider.models.web import WebResult
 from baiduspider.models.wenku import WenkuResult
 from baiduspider.models.zhidao import ZhidaoResult
 from baiduspider.parser import Parser
+import requests
 
 __all__ = ["BaiduSpider"]
 
@@ -1084,19 +1085,10 @@ class BaiduSpider(BaseSpider):
                 self._handle_error(error)
         return BaikeResult._build_instance(result["results"], result["total"])
 
-    def search_url(self, url, proxies: Dict = None,) -> NewsResult:
-        error = None
-        code = None
-        try:
-            print(url)
-            # 源码
-            code = self._get_response(url, proxies)
-            # result = self.parser.parse_news(code)
-            # result = result if result else self.EMPTY
-        except Exception as err:
-            error = err
-        finally:
-            if error:
-                self._handle_error(error)
+    def search_url(self, url, proxies: Dict = None, encoding: str = None) -> NewsResult:
+        # 源码
+        code = self._get_response(url, proxies, encoding)
+        # result = self.parser.parse_news(code)
+        # result = result if result else self.EMPTY
         # pages = self._calc_pages(result["total"], self.RESULTS_PER_PAGE["news"])
         return code

@@ -609,19 +609,27 @@ class Parser(BaseSpider):
                 cover = res.find("div", class_="c-img-radius-large").find("img")["src"]
             except Exception:
                 cover = None
+            # 高亮字体
+            try:
+                highlight = res.find("em")
+            except Exception:
+                highlight = None
             # 采集时间
             collect = time.strftime("%Y-%m-%d %H:%M:%S", time.localtime())
             uuid_ = str(uuid.uuid4())
             # 生成结果
             result = {
+                "id": uuid_,
                 "title": title,
                 "author": author,
                 "date": date,
                 "des": des,
                 "url": url,
                 "cover": cover,
-                "collectDate": collect,
-                "id": uuid_
+                "collect_date": collect,
+                "flag": 0,
+                "retry": 0,
+                "err": None
             }
             results.append(result)  # 加入结果
         # 获取所有页数
