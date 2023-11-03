@@ -611,9 +611,12 @@ class Parser(BaseSpider):
                 cover = None
             # 高亮字体
             try:
-                highlight = res.find("em")
+                highlight_font=[]
+                tags = res.findAll("em")
+                for tag in tags:
+                    highlight_font.append(tag.text)
             except Exception:
-                highlight = None
+                highlight_font = None
             # 采集时间
             collect = time.strftime("%Y-%m-%d %H:%M:%S", time.localtime())
             uuid_ = str(uuid.uuid4())
@@ -629,7 +632,8 @@ class Parser(BaseSpider):
                 "collect_date": collect,
                 "flag": 0,
                 "retry": 0,
-                "err": None
+                "err": None,
+                "highlight_font": highlight_font
             }
             results.append(result)  # 加入结果
         # 获取所有页数
