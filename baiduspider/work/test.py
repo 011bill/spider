@@ -20,10 +20,10 @@ if __name__ == '__main__':
     df = pd.read_excel(excel_file, sheet_name=sheet_name)
     # 检查指定列是否存在
     if column_name in df.columns:
-        selected_column = df[column_name].iloc[399:500]
-        # selected_column = df[df.index >= 500][column_name]
+        # selected_column = df[column_name].iloc[500:510]
+        selected_column = df[df.index >= 721][column_name]
     else:
-        print(f"列 '{column_name}' 不存在于工作表 '{sheet_name}' 中。")
+        print("列 '{column_name}' 不存在于工作表 '{sheet_name}' 中。")
     # 将列数据转换为列表
     company_names = selected_column.tolist()
     # 打印企业名称列表
@@ -47,7 +47,7 @@ if __name__ == '__main__':
         count_data += 1
         # 搜索网页
         try:
-            time.sleep(3)
+            time.sleep(5)
             result = BaiduSpider().search_news(company_name, sort_by='time', pn=1).plain
         except Exception as e:
             insert_query = "INSERT INTO company_bdzixun2 (id, company, simple_name, title, author, date, des, url, cover, flag, filter, retry, err, remark, collect_date) " \
@@ -102,3 +102,6 @@ if __name__ == '__main__':
 # 0~200 ==> 943
 # 200~400 执行完成：总抓取条数：862，失败：0，入库：807耗时：742
 # 399~500 执行完成：共执行 101 家公司，总抓取条数：429，失败：0，入库：383耗时：372
+# 500~510 执行完成：共执行 10 家公司，总抓取条数：41，失败：0，入库：37耗时：39
+# 510~722
+# 722~  执行完成：共执行 1404 家公司，总抓取条数：3938，失败：0，入库：3021耗时：8092
