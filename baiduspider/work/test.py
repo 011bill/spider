@@ -21,6 +21,7 @@ if __name__ == '__main__':
     # 检查指定列是否存在
     if column_name in df.columns:
         selected_column = df[column_name].iloc[399:500]
+        # selected_column = df[df.index >= 500][column_name]
     else:
         print(f"列 '{column_name}' 不存在于工作表 '{sheet_name}' 中。")
     # 将列数据转换为列表
