@@ -617,22 +617,14 @@ class Parser(BaseSpider):
                     highlight_font.append(tag.text)
             except Exception:
                 highlight_font = None
-            # 采集时间
-            collect = time.strftime("%Y-%m-%d %H:%M:%S", time.localtime())
-            uuid_ = str(uuid.uuid4())
             # 生成结果
             result = {
-                "id": uuid_,
                 "title": title,
                 "author": author,
                 "date": date,
                 "des": des,
                 "url": url,
                 "cover": cover,
-                "collect_date": collect,
-                "flag": 0,
-                "retry": 0,
-                "err": None,
                 "highlight_font": highlight_font
             }
             results.append(result)  # 加入结果

@@ -6,27 +6,29 @@ from pprint import pprint
 from gne import GeneralNewsExtractor
 import requests
 import json
-from selenium import webdriver
-from selenium.webdriver.chrome.options import Options
 import mysql.connector
+from selenium import webdriver
+from selenium.webdriver.chrome.service import Service
 
 
 def by_selenium(url):
-    # 我们并不需要浏览器弹出
-    options = Options()
-    options.headless = True
-
-    # 启动浏览器的无头模式，访问
-    # ========================================
-    # 注意：这是Selenium 4.10.0以下写法，高版本见下面
-    # ========================================
-    # driver = webdriver.Chrome('chromedriver.exe', options=options)
-    driver = webdriver.Chrome('D:\work\chromedriver-win64\chromedriver-win64\chromedriver.exe', options=options)
-    driver.get(url)
-
-    # 获取页面的源代码
-    page_source = driver.page_source
-
+    # # 我们并不需要浏览器弹出
+    # options = Options()
+    # options.headless = True
+    # # 启动浏览器的无头模式，访问
+    # # ========================================
+    # # 注意：这是Selenium 4.10.0以下写法，高版本见下面
+    # # ========================================
+    # # driver = webdriver.Chrome('chromedriver.exe', options=options)
+    # driver = webdriver.Chrome('D:\work\chromedriver-win64\chromedriver-win64\chromedriver.exe', options=options)
+    # driver.get(url)
+    # # 获取页面的源代码
+    # page_source = driver.page_source
+    # driver.quit()
+    service = Service(executable_path='D:\work\chromedriver-win64\chromedriver-win64\chromedriver.exe')
+    options = webdriver.ChromeOptions()
+    driver = webdriver.Chrome(service=service, options=options)
+    # ...
     driver.quit()
 
     return page_source
@@ -76,6 +78,7 @@ if __name__ == '__main__':
                 # 更新公司资讯列表
                 update_query = "UPDATE company_bdzixun_copy1 SET flag = %s, retry = %s, err = %s WHERE id = %s"
                 cursor.execute(update_query, (0, retry, err, id))
+                conn.commit()
                 print(str(url)+" ==== 抓取失败")
                 continue
 
