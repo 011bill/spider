@@ -46,7 +46,7 @@ CREATE TABLE IF NOT EXISTS company_bdzixun_detail (
     author VARCHAR(50),
     publish_time VARCHAR(255),
     content LONGTEXT,
-    images VARCHAR(500),
+    images TEXT,
     url VARCHAR(255),
     company VARCHAR(255),
     remark VARCHAR(255),
