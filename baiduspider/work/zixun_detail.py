@@ -4,6 +4,7 @@ from gne import GeneralNewsExtractor
 import mysql.connector
 from baiduspider.work.utils import search_by_selenium
 
+filter_url = 'https://www.iyiou.com'
 
 if __name__ == '__main__':
     begin = int(time.time())
@@ -15,13 +16,14 @@ if __name__ == '__main__':
         database="bd_spider",
         connection_timeout=10
     )
-    current_page = 1
-    page_size = 10
-    start = (current_page-1) * page_size
+    # current_page = 1
+    # page_size = 10
+    # start = (current_page-1) * page_size
     cursor = conn.cursor()
     # flag(是否爬取到正文：0为爬取，1已爬取)，filter(0：保留，1：过滤)
-    select_query = "SELECT id, company, url, retry FROM company_bdzixun2_copy1 WHERE filter = 0 and flag = 0 and retry < 10 limit %s, %s"
-    cursor.execute(select_query, (start, page_size))
+    select_query = "SELECT id, company, url, retry FROM company_bdzixun2_copy1 WHERE filter = 0 and flag = 0 and retry < 10"
+    # select_query = "SELECT id, company, url, retry FROM company_bdzixun2_copy1 WHERE id = '0125c788-b8cb-45a3-8eed-deb406c2e56d'"
+    cursor.execute(select_query)
     records = cursor.fetchall()
 
     print('==================开始执行 '+str(cursor.rowcount)+'条 =================')
@@ -34,8 +36,8 @@ if __name__ == '__main__':
         id, company, url, retry = row
         err = None
         if url:
-            data_url_ = url.replace("https://", "http://")
-            time.sleep(3)
+            # data_url_ = url.replace("https://", "http://")
+            # time.sleep(3)
             try:
                 # if data_url_.find('10jqka.com.cn') != -1 or data_url_.find('cnstock.com') != -1:
                 #     html_content = BaiduSpider().search_url(data_url_, encoding='gbk')

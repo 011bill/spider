@@ -31,7 +31,7 @@ def filter_simple_name():
     conn = conn_mysql()
     cursor = conn.cursor()
 
-    select_query = "SELECT id, company, simple_name, date FROM company_bdzixun_copy1"
+    select_query = "SELECT id, company, simple_name, date FROM company_bdzixun2"
     cursor.execute(select_query)
     records = cursor.fetchall()
 
@@ -52,7 +52,7 @@ def filter_simple_name():
                     unique_list.remove(s)
             result = [x for x in unique_list if x not in filter_words]
             string = ','.join(result)
-            update_query = 'UPDATE company_bdzixun_copy1 SET company = %s, simple_name = %s WHERE id = %s '
+            update_query = 'UPDATE company_bdzixun2 SET company = %s, simple_name = %s WHERE id = %s '
             cursor.execute(update_query, (company, string, id))
             conn.commit()
             print(id+'  ' + simple_name + '==>' + string)
@@ -61,22 +61,28 @@ def filter_simple_name():
     conn.close()
 
 
-# 格式化日期
-def transform_date():
+# 格式化日期 type=1 咨询列表, type=2 正文
+def transform_date(type):
     conn = conn_mysql()
     cursor = conn.cursor()
-
-    select_query = "SELECT id, date FROM company_bdzixun_copy1"
+    if type == 1:
+        column = 'date'
+        table = 'company_bdzixun2'
+    elif type == 2:
+        column = 'publish_time'
+        table = 'company_bdzixun_detail_copy1'
+    # select_query = "SELECT id, date FROM company_bdzixun_copy1"
+    select_query = "SELECT id, " + column + " FROM " + table
     cursor.execute(select_query)
     records = cursor.fetchall()
     for row in records:
         id, date = row
         if date:
-            d = transform(date)
-            update_query = 'UPDATE company_bdzixun_copy1 SET date = %s WHERE id = %s '
+            d = transform(date, type)
+            update_query = 'UPDATE ' + table + ' SET ' + column + ' = %s WHERE id = %s '
             cursor.execute(update_query, (d, id))
             conn.commit()
-            print(id+'  ' + date + '==>' + str(d))
+            print(id+'  ' + column + '==>' + str(d))
     # 关闭连接
     cursor.close()
     conn.close()
@@ -85,47 +91,90 @@ def transform_date():
 def export_excel():
     conn = conn_mysql()
     # 查询语句
-    query = "SELECT * FROM company_bdzixun_detail_test"
+    query = "SELECT * FROM company_bdzixun_detail_copy1"
     # 使用 pandas 从 MySQL 数据库中检索数据
     data = pd.read_sql(query, con=conn)
     # 关闭数据库连接
     conn.close()
     # 将数据导出到 Excel 文件
-    data.to_excel("../../data.xlsx", index=False)
+    data.to_excel("../../detail.xlsx", index=False)
     print("数据已导出到 data.xlsx 文件.")
 
 
-def transform(date_string):
+date_formats = [
+    "%Y-%m-%d",
+    "%Y.%m-%d",
+    "%Y-%m-%d %H∶%M",
+    "%Y年%m月%d日%H:%M",
+    "%Y/%m/%d %H:%M",
+    "%Y-%m-%d %H:%M:%S",
+    "%Y-%m-%d %H:%M:%S.%f",
+    "%Y-%m-%d %H:%M",
+    "%Y.%m.%d %H:%M",
+    "%Y/%m/%d %H:%M:%S",
+    "%Y.%m.%d %H:%M:%S",
+    "%Y年%m月%d日",
+    "%m月%d日",
+    "%m月%d日 %H:%M",
+    "%m月%d日%H:%M:%S",
+    "%m月%d日 %H:%M:%S",
+    "%Y年%m月%d日 %H:%M",
+    "%Y年%m月%d日%H:%M",
+    "%Y/%m/%d",
+    "%Y年%m月%d日 %H:%M:%S",
+    "%Y-%m-%dT%H:%M:%S%z",
+    "%Y-%m-%dT%H:%M:%S",
+    "%a %b %d %H:%M:%S",
+    "%b %d %H:%M:%S",
+]
+
+
+def transform(date_string, type):
+    date_string = date_string.strip()
     current_year = datetime.now().year
+    date = None
+    # 咨询列表 日期格式:%Y-%m-%d
+    if type == 1:
+        format = '%Y-%m-%d'
+        if '年' in date_string:
+            # 包含年份的日期格式，例如：2019年12月2日
+            date = datetime.strptime(date_string, "%Y年%m月%d日")
+        elif '今天' in date_string:
+            date = datetime.now()
+        elif '昨天' in date_string:
+            # 昨天
+            date = datetime.now() - timedelta(days=1)
+        elif '前天' in date_string:
+            # 前天
+            date = datetime.now() - timedelta(days=2)
+        elif '分钟前' in date_string:
+            # X分钟前，例如：50分钟前
+            minutes = int(date_string.split('分钟前')[0])
+            date = datetime.now() - timedelta(minutes=minutes)
+        elif '小时前' in date_string:
+            hours = int(date_string.split('小时前')[0])
+            date = datetime.now() - timedelta(hours=hours)
+        elif '天前' in date_string:
+            # X天前，例如：5天前
+            days = int(date_string.split('天前')[0])
+            date = datetime.now() - timedelta(days=days)
+        else:
+            # 没有年份的日期格式，例如：5月16日
+            date = datetime.strptime(date_string, "%m月%d日")
+            date = date.replace(year=current_year)
+    # 正文日期格式：%Y-%m-%d %H:%M:%S
+    elif type == 2:
+        format = '%Y-%m-%d %H:%M:%S'
+        for date_format in date_formats:
+            try:
+                date = datetime.strptime(date_string, date_format)
+                if date.year == 1900:
+                    date = date.replace(year=current_year)
+                break
+            except ValueError:
+                continue
 
-    if '年' in date_string:
-        # 包含年份的日期格式，例如：2019年12月2日
-        date = datetime.strptime(date_string, "%Y年%m月%d日")
-    elif '今天' in date_string:
-        date = datetime.now()
-    elif '昨天' in date_string:
-        # 昨天
-        date = datetime.now() - timedelta(days=1)
-    elif '前天' in date_string:
-        # 前天
-        date = datetime.now() - timedelta(days=2)
-    elif '分钟前' in date_string:
-        # X分钟前，例如：50分钟前
-        minutes = int(date_string.split('分钟前')[0])
-        date = datetime.now() - timedelta(minutes=minutes)
-    elif '小时前' in date_string:
-        hours = int(date_string.split('小时前')[0])
-        date = datetime.now() - timedelta(hours=hours)
-    elif '天前' in date_string:
-        # X天前，例如：5天前
-        days = int(date_string.split('天前')[0])
-        date = datetime.now() - timedelta(days=days)
-    else:
-        # 没有年份的日期格式，例如：5月16日
-        date = datetime.strptime(date_string, "%m月%d日")
-        date = date.replace(year=current_year)
-
-    return date.strftime("%Y-%m-%d")
+    return date.strftime(format)
 
 
 # 启动浏览器的无头模式 chromedriver下载地址：https://googlechromelabs.github.io/chrome-for-testing/
@@ -162,7 +211,7 @@ def import_excel(path):
     df = pd.read_excel(path)
     conn = conn_mysql()
     cursor = conn.cursor()
-    update_query = 'UPDATE company_bdzixun2_copy1 SET filter = %s WHERE id = %s '
+    update_query = 'UPDATE company_bdzixun2 SET filter = %s WHERE id = %s '
     for index, row in df.iterrows():
         id_ = row['id']
         filter_ = row['filter1']
