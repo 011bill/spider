@@ -24,6 +24,7 @@ from baiduspider.models.wenku import WenkuResult
 from baiduspider.models.zhidao import ZhidaoResult
 from baiduspider.parser import Parser
 import requests
+from baiduspider.work.utils import get_proxy, delete_proxy
 
 __all__ = ["BaiduSpider"]
 
@@ -747,27 +748,29 @@ class BaiduSpider(BaseSpider):
         """
         error = None
         result = self.EMPTY
-        try:
-            if sort_by == "time":
-                sort_by = 4
-            else:
-                sort_by = 1
-            if show == "media":
-                show = 1
-            elif show == "baijiahao":
-                show = 2
-            else:
-                show = 0
-            url = f"http://www.baidu.com/s?tn=news&wd={quote(query)}&pn={(pn - 1) * 10}&rtt={sort_by}&medium={show}&cl=2"
-            # 源码
-            code = self._get_response(url, proxies)
-            result = self.parser.parse_news(code)
-            result = result if result else self.EMPTY
-        except Exception as err:
-            error = err
-        finally:
-            if error:
-                self._handle_error(error)
+        # try:
+        if sort_by == "time":
+            sort_by = 4
+        else:
+            sort_by = 1
+        if show == "media":
+            show = 1
+        elif show == "baijiahao":
+            show = 2
+        else:
+            show = 0
+        url = f"http://www.baidu.com/s?tn=news&wd={quote(query)}&pn={(pn - 1) * 10}&rtt={sort_by}&medium={show}&cl=2"
+        # 源码
+        code = self._get_response(url, proxies)
+        if '百度安全验证' in code:
+            return '百度安全验证'
+        result = self.parser.parse_news(code)
+        result = result if result else self.EMPTY
+        # except Exception as err:
+        #     error = err
+        # finally:
+        #     if error:
+        #         self._handle_error(error)
         pages = self._calc_pages(result["total"], self.RESULTS_PER_PAGE["news"])
         return NewsResult._build_instance(result["results"], pages, result["total"])
 
