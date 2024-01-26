@@ -9,6 +9,7 @@ if __name__ == '__main__':
     begin = int(time.time())
     # 指定Excel文件路径
     excel_file = "D:\work\spider\企业信息20240123.xlsx"
+    # excel_file = "C:/Users/yxxue/Desktop/企业信息20240123.xlsx"
     # df = pd.read_excel(excel_file, engine='openpyxl', header=None)  # 不指定列名
     # first_column_data = df.iloc[:, 0]  # 提取第一列的数据
     sheet_name = 'Sheet1'
@@ -49,12 +50,22 @@ if __name__ == '__main__':
         try:
             time.sleep(delay)
             result = BaiduSpider().search_news(company_name, sort_by='time', pn=1).plain
-            if '百度安全验证' == result:
+            # proxy = get_proxy().get("proxy")
+            # result = BaiduSpider().search_news(company_name, sort_by='time', pn=1,
+            #                                    proxies={"http": "http://{}".format(proxy)}).plain
+        except Exception as e:
+            # 添加爬取失败的公司信息
+            cursor.execute(insert_company_log,
+                           (str(uuid.uuid4()), company_name, 'error:' + str(e), time.strftime("%Y-%m-%d %H:%M:%S", time.localtime())))
+            conn.commit()
+            fail_count += 1
+            print(str(company_name) + " ==> 抓取失败" + '错误信息：' + str(e))
+            # 添加百度封禁日志
+            if '百度安全验证' == e:
                 end_time = time.localtime()
                 end_time_str = time.strftime("%Y-%m-%d %H:%M:%S", end_time)
-                cursor.execute(insert_ban_log, (str(uuid.uuid4()), start_time_str, end_time_str, delay, batch_count, end_time_str))
-                cursor.execute(insert_company_log,
-                               (str(uuid.uuid4()), company_name, 'error:百度安全验证', end_time_str))
+                cursor.execute(insert_ban_log,
+                               (str(uuid.uuid4()), start_time_str, end_time_str, delay, batch_count, time.strftime("%Y-%m-%d %H:%M:%S", time.localtime())))
                 conn.commit()
                 # 被封禁默认延迟10分钟，如果延迟结束时间间隔小与1分钟说明还未解封，则加大延迟
                 time_difference = (time.mktime(end_time) - time.mktime(start_time))
@@ -63,18 +74,10 @@ if __name__ == '__main__':
                 print('==================== 百度安全验证，延迟' + str(ban_delay) + '分钟后继续，执行条数' +
                       str(batch_count) + '，时间：' + start_time + '~' + end_time + ' ====================')
                 time.sleep(ban_delay)
-                start_time = time.strftime("%Y-%m-%d %H:%M:%S", time.localtime())
+                # 重置开始时间
+                start_time = time.localtime()
+                start_time_str = time.strftime("%Y-%m-%d %H:%M:%S", start_time)
                 batch_count = 0
-                continue
-            # proxy = get_proxy().get("proxy")
-            # result = BaiduSpider().search_news(company_name, sort_by='time', pn=1,
-            #                                    proxies={"http": "http://{}".format(proxy)}).plain
-        except Exception as e:
-            cursor.execute(insert_company_log,
-                           (str(uuid.uuid4()), company_name, 'error:' + str(e), time.strftime("%Y-%m-%d %H:%M:%S", time.localtime())))
-            conn.commit()
-            fail_count += 1
-            print(str(company_name) + " ==> 抓取失败" + '错误信息：' + str(e))
             continue
 
         count_company = 0

@@ -763,7 +763,7 @@ class BaiduSpider(BaseSpider):
         # 源码
         code = self._get_response(url, proxies)
         if '百度安全验证' in code:
-            return '百度安全验证'
+            raise Exception('百度安全验证')
         result = self.parser.parse_news(code)
         result = result if result else self.EMPTY
         # except Exception as err:
