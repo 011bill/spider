@@ -1,3 +1,4 @@
+import random
 import time
 from baiduspider import BaiduSpider
 import pandas as pd
@@ -8,8 +9,8 @@ from baiduspider.work.sql import insert_zixun, select_zixun_by_url, insert_compa
 if __name__ == '__main__':
     begin = int(time.time())
     # 指定Excel文件路径
-    excel_file = "D:\work\spider\企业信息20240123.xlsx"
-    # excel_file = "C:/Users/yxxue/Desktop/企业信息20240123.xlsx"
+    # excel_file = "D:\work\spider\企业信息20240123.xlsx"
+    excel_file = "C:/Users/yxxue/Desktop/企业信息20240123.xlsx"
     # df = pd.read_excel(excel_file, engine='openpyxl', header=None)  # 不指定列名
     # first_column_data = df.iloc[:, 0]  # 提取第一列的数据
     sheet_name = 'Sheet1'
@@ -18,8 +19,8 @@ if __name__ == '__main__':
     df = pd.read_excel(excel_file, sheet_name=sheet_name)
     # 检查指定列是否存在
     if column_name in df.columns:
-        selected_column = df[df.index >= 1007][column_name]  # 从第几行开始
-        # selected_column = df[column_name]
+        # selected_column = df[df.index >= 1753][column_name]  # 从第几行开始
+        selected_column = df[column_name]
     else:
         print("列 '{column_name}' 不存在于工作表 '{sheet_name}' 中。")
     # 将列数据转换为列表
@@ -33,19 +34,23 @@ if __name__ == '__main__':
     fail_count = 0
     total_count = len(company_names)
     batch_count = 0
-    delay = 1  # 爬取间隔3秒
-    ban_delay = 10 * 60  # 封禁延迟10分钟
+    delay_min = 1
+    delay_max = 10
+    ban_delay = 30 * 60  # 封禁延迟30分钟
+    act_start_time = time.localtime()
     start_time = time.localtime()
     start_time_str = time.strftime("%Y-%m-%d %H:%M:%S", start_time)
     print('==================== 开始执行，执行总数：' + str(total_count) + '，开始时间：' + start_time_str + ' ====================')
     for company_name in company_names:
-        # 如果连续爬30分钟，延迟2分钟
-        time_difference = (time.mktime(time.localtime()) - time.mktime(start_time)) / 60
-        if time_difference > 30:
-            print('==================== 已经连续执行30分，休息' + delay + '分 ====================')
+        # 爬取间隔
+        delay = random.randint(delay_min, delay_max)
+        # 如果连续爬10分钟，随机暂停0~10分
+        time_difference = (time.mktime(time.localtime()) - time.mktime(act_start_time)) / 60
+        if time_difference > 10:
+            print('==================== 已经连续执行10分，暂停' + str(delay) + '分 ====================')
             time.sleep(delay * 60)
+            act_start_time = time.localtime()
         t = int(time.time())
-        batch_count += 1
         # 搜索网页
         try:
             time.sleep(delay)
@@ -61,25 +66,30 @@ if __name__ == '__main__':
             fail_count += 1
             print(str(company_name) + " ==> 抓取失败" + '错误信息：' + str(e))
             # 添加百度封禁日志
-            if '百度安全验证' == e:
+            if '百度安全验证' == str(e):
                 end_time = time.localtime()
                 end_time_str = time.strftime("%Y-%m-%d %H:%M:%S", end_time)
                 cursor.execute(insert_ban_log,
-                               (str(uuid.uuid4()), start_time_str, end_time_str, delay, batch_count, time.strftime("%Y-%m-%d %H:%M:%S", time.localtime())))
+                               (str(uuid.uuid4()), start_time_str, end_time_str, str(delay_min) + '~' + str(delay_max),
+                                batch_count, time.strftime("%Y-%m-%d %H:%M:%S", time.localtime())))
                 conn.commit()
                 # 被封禁默认延迟10分钟，如果延迟结束时间间隔小与1分钟说明还未解封，则加大延迟
                 time_difference = (time.mktime(end_time) - time.mktime(start_time))
-                if time_difference < 60:
+                if time_difference < 10 * 60:
                     ban_delay += ban_delay
-                print('==================== 百度安全验证，延迟' + str(ban_delay) + '分钟后继续，执行条数' +
-                      str(batch_count) + '，时间：' + start_time + '~' + end_time + ' ====================')
+                else:
+                    ban_delay = 30 * 60
+                print('==================== 百度安全验证，延迟' + str(ban_delay / 60) + '分钟后继续，执行条数' +
+                      str(batch_count) + '，时间：' + start_time_str + '~' + end_time_str + ' ====================')
                 time.sleep(ban_delay)
                 # 重置开始时间
+                act_start_time = time.localtime()
                 start_time = time.localtime()
                 start_time_str = time.strftime("%Y-%m-%d %H:%M:%S", start_time)
                 batch_count = 0
             continue
 
+        batch_count += 1
         count_company = 0
         count_company_mysql = 0
         for data in result:
