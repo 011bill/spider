@@ -611,12 +611,12 @@ class Parser(BaseSpider):
                 cover = None
             # 高亮字体
             try:
-                highlight_font=[]
+                highlight = []
                 tags = res.findAll("em")
                 for tag in tags:
-                    highlight_font.append(tag.text)
+                    highlight.append(tag.text)
             except Exception:
-                highlight_font = None
+                highlight = None
             # 生成结果
             result = {
                 "title": title,
@@ -625,7 +625,7 @@ class Parser(BaseSpider):
                 "des": des,
                 "url": url,
                 "cover": cover,
-                "highlight_font": highlight_font
+                "highlight": highlight
             }
             results.append(result)  # 加入结果
         # 获取所有页数
