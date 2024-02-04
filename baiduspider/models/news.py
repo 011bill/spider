@@ -31,6 +31,7 @@ class NewsNormal(NewsNormal):
         self.title = ""
         self.url = ""
         self.cover = ""
+        self.highlight = []
         self.plain = {}
 
     @staticmethod
@@ -44,6 +45,7 @@ class NewsNormal(NewsNormal):
         __returns.title = plain.get("title")
         __returns.url = plain.get("url")
         __returns.cover = plain.get("cover")
+        __returns.highlight = plain.get("highlight")
         return __returns
 
 

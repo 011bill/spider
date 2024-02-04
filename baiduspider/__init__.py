@@ -764,6 +764,10 @@ class BaiduSpider(BaseSpider):
         code = self._get_response(url, proxies)
         if '百度安全验证' in code:
             raise Exception('百度安全验证')
+        if '404 Not Found' in code:
+            raise Exception('404 Not Found')
+        if 'Auth Failed' in code:
+            raise Exception(code)
         result = self.parser.parse_news(code)
         result = result if result else self.EMPTY
         # except Exception as err:
@@ -1088,10 +1092,15 @@ class BaiduSpider(BaseSpider):
                 self._handle_error(error)
         return BaikeResult._build_instance(result["results"], result["total"])
 
-    def search_url(self, url, proxies: Dict = None, encoding: str = None) -> NewsResult:
-        # 源码
-        code = self._get_response(url, proxies, encoding)
-        # result = self.parser.parse_news(code)
-        # result = result if result else self.EMPTY
-        # pages = self._calc_pages(result["total"], self.RESULTS_PER_PAGE["news"])
-        return code
+    def get_response(self, url, proxies):
+        return self._get_response(url, proxies)
+
+    def parse_html(self, html, source):
+        if '百度' == source:
+            result = self.parser.parse_news(html)
+        if '搜狗' == source:
+            result = self.parser.parse_sougou_news(html)
+        if '360' == source:
+            result = self.parser.parse_360_news(html)
+        pages = self._calc_pages(result["total"], self.RESULTS_PER_PAGE["news"])
+        return NewsResult._build_instance(result["results"], pages, result["total"])

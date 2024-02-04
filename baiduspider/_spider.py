@@ -75,12 +75,12 @@ class BaseSpider(object):
         if encoding:
             response.encoding = encoding
             return response.text
-        # 如果响应中没有指定编码，使用chardet来检测编码
-        # if not response.encoding:
-        #     response.encoding = response.apparent_encoding
-        if not response.encoding:
-            response.encoding = chardet.detect(response.content)["encoding"]
-        content = bytes(response.text, response.encoding).decode("utf-8")
+        # 如果响应中没有指定编码，使用 apparent_encoding 或者 默认编码 'utf-8'
+        if response.encoding is None or response.encoding == 'ISO-8859-1':
+            encoding = response.apparent_encoding if response.apparent_encoding else 'utf-8'
+        else:
+            encoding = response.encoding
+        content = bytes(response.text, encoding).decode("utf-8")
         return content
 
     def _handle_error(self, err: Exception, parent="", cause="") -> None:

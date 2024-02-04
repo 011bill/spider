@@ -1,5 +1,6 @@
 import json
 import math
+import random
 from datetime import datetime, time
 from html import unescape
 from time import localtime, strftime
@@ -841,3 +842,159 @@ class Parser(BaseSpider):
                 {"title": title, "des": des, "upd_date": upd_date, "url": url}
             )
         return {"results": results, "total": total}
+
+    # 解析搜狗资讯数据
+    def parse_sougou_news(self, content: str) -> dict:
+        bs = BeautifulSoup(self._format(content), "html.parser")
+        # 搜索结果总数
+        total = int(bs.find("div", id="main")
+                    .find("div", class_="search-info")
+                    .find("p", class_="num-tips")
+                    .text.split("约", 1)[-1]
+                    .split("条", 1)[0]
+                    .replace(",", ""))
+        data = (
+            bs.find("div", class_="results")
+            .findAll("div", class_="vrwrap")
+        )
+
+        results = []
+        for res in data:
+            # 标题
+            title = self._format(res.find("h3").find("a").text)
+            # 链接
+            href = res.find("h3").find("a")["href"]
+            url = self.url_decode(href)
+            # 简介
+            des = (
+                res.find("div", class_="text-layout")
+                .find("p", class_="star-wiki")
+                .text
+            )
+            if des:
+                des = des.strip()
+            try:
+                publish_element = (
+                    res.find("div", class_="text-layout")
+                    .find("div", class_="fz-mid")
+                    .findAll("span")
+                )
+            except Exception:
+                publish_element = []
+            # 作者
+            try:
+                author = publish_element[0].text
+            except Exception:
+                author = None
+            # 发布日期
+            try:
+                date = publish_element[1].text
+            except Exception:
+                date = None
+            # 封面图片
+            try:
+                cover = res.find("div", class_="img-layout").find("img")["src"]
+            except Exception:
+                cover = None
+            # 高亮字体
+            try:
+                highlight = []
+                tags = res.findAll("em")
+                for tag in tags:
+                    highlight.append(tag.text)
+            except Exception:
+                highlight = None
+            # 生成结果
+            result = {
+                "title": title,
+                "author": author,
+                "date": date,
+                "des": des,
+                "url": url,
+                "cover": cover,
+                "highlight": highlight
+            }
+            results.append(result)  # 加入结果
+        return {"results": results, "total": total}
+
+    # 360资讯数据解析
+    def parse_360_news(self, content: str) -> dict:
+        bs = BeautifulSoup(self._format(content), "html.parser")
+        # 搜索结果总数
+        total = int(bs.find("div", id="filter")
+                    .find("div", class_="filter-total")
+                    .text.split("约", 1)[-1]
+                    .split("条", 1)[0]
+                    .replace(",", ""))
+        results = []
+        if total > 0:
+            data = (
+                bs.find("div", id="main")
+                .find("ul", id="news")
+                .findAll("li", class_="full-txt")
+            )
+            for res in data:
+                # 标题
+                title = self._format(res.find("a").find("h3").text)
+
+                # 链接
+                url = res.find("a")["href"]
+                # 简介
+                des = (
+                    res.find("div", class_="g-figure-caption")
+                    .find("p", class_="summary")
+                    .text
+                )
+                # 作者
+                try:
+                    author = (
+                        res.find("div", class_="g-figure-caption")
+                        .find("p", class_="g-linkinfo")
+                        .find("cite", class_="sitename")
+                        .text
+                    )
+                except Exception:
+                    author = None
+                # 发布日期
+                try:
+                    date = (
+                        res.find("div", class_="g-figure-caption")
+                        .find("p", class_="g-linkinfo")
+                        .find("span", class_="time")
+                        .text
+                    )
+                except Exception:
+                    date = None
+                # 封面图片
+                try:
+                    cover = res.find("div", class_="g-img-inner").find("img")["src"]
+                except Exception:
+                    cover = None
+                # 高亮字体
+                try:
+                    highlight = []
+                    tags = res.findAll("em")
+                    for tag in tags:
+                        highlight.append(tag.text)
+                except Exception:
+                    highlight = None
+                # 生成结果
+                result = {
+                    "title": title,
+                    "author": author,
+                    "date": date,
+                    "des": des,
+                    "url": url,
+                    "cover": cover,
+                    "highlight": highlight
+                }
+                results.append(result)  # 加入结果
+        return {"results": results, "total": total}
+
+    def url_decode(self, r):
+        url = 'https://www.sogou.com' + r
+        b = random.randint(0, 99)
+        a = url.index('url=')
+        a = url[a + 30 + b:a + 31 + b:]
+        url += '&k=' + str(b) + '&h=' + a
+        return url

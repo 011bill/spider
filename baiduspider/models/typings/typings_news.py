@@ -19,6 +19,7 @@ class NewsNormal(object):
         self.title: str
         self.url: str
         self.cover: Union[str, None]
+        self.highlight: list
         self.plain: dict
 
 
