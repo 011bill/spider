@@ -11,7 +11,7 @@ from baiduspider.utils.database import MySQL
 def get_proxy():
     mysql = MySQL()
     # 查询在有效期内的代理
-    select = mysql.select('proxy_log', ['proxy'], 'TIMESTAMPDIFF(MINUTE, create_date, NOW())<expire and status=1 and fail<9')
+    select = mysql.select('proxy_log', ['proxy'], 'TIMESTAMPDIFF(MINUTE, create_date, NOW())<expire and status=1')
     mysql.close()
     if select:
         ip_ = select[0][0]
@@ -164,7 +164,7 @@ def get_spider_data(company_, ip_, execute_id, url):
 # split_ = '为您推荐相关资讯约8,512条'.split("约", 1)[-1].split("篇", 1)[0].split("个", 1)[0].split("条", 1)[0].replace(",", "")
 # print(split_)
 
-get_spider_data('丹华水利环境技术（上海）有限公司', None, '', f'http://news.so.com/ns?j=0&rank=pdate&src=sort_time&scq=&q={quote("丹华水利环境技术（上海）有限公司")}')
+# get_spider_data('丹华水利环境技术（上海）有限公司', None, '', f'http://news.so.com/ns?j=0&rank=pdate&src=sort_time&scq=&q={quote("丹华水利环境技术（上海）有限公司")}')
 # get_spider_data('联想（上海）计算机科技有限公司', None, '',
 #                 f'http://www.sogou.com/sogou?interation=1728053249&interV=&pid=sogou-wsse-8f646834ef1adefa&page=1&ie=utf8&query={quote("联想（上海）计算机科技有限公司")}')
 
