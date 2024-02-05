@@ -32,8 +32,7 @@ if __name__ == '__main__':
 
     for company_ in excel_data_list:
         start_time = time.time()
-        # time.sleep(1)
-        # TODO 取消延迟，轮询爬取多个网站
+        # 取消延迟，轮询爬取多个网站
         website = [
             # 百度
             f"http://www.baidu.com/s?tn=news&wd={quote(company_)}&pn=0&rtt=4&medium=0&cl=2",
@@ -44,51 +43,93 @@ if __name__ == '__main__':
         ]
         # 取出一个代理
         ip_ = get_proxy()
+        # 打印日志变量
+        count_baidu = 0
+        count_sougou = 0
+        count_360 = 0
+        source_list = []
+        status = 1
+        message = 'success'
+        index = 0
         # 获取资讯列表
         for url in website:
-            zixun_list = get_spider_data(company_, ip_, execute_id, url)
             source = get_source(url)
-            if zixun_list:
-                # 数据入库
-                for data in zixun_list:
-                    total_data_count += 1
-                    # 数据处理
-                    company = transform_company_name(company_)
-                    simple_name = None
-                    if data['highlight']:
-                        simple_name = get_simple_name(data['highlight'])
-                        simple_name = filter_simple_name(simple_name, company)
-                    date = data['date']
-                    if date:
-                        date = transform_date(date, 1)
-                    # 过滤重复资讯
-                    # 查询是否已存在相同URL的记录
-                    url = data['url']
-                    record = mysql.select('zixun', '*', 'url=\'' + url + '\'')
-                    if len(record) == 0:
-                        insert_zixun_data = {
-                            'id': str(uuid.uuid4()),
-                            'execute_id': execute_id,
-                            'company': company,
-                            'simple_name': simple_name,
-                            'title': data['title'],
-                            'author': data['author'],
-                            'date': date,
-                            'des': data['des'],
-                            'url': url,
-                            'cover': data['cover'],
-                            'flag': 0,
-                            'filter': 0,
-                            'retry': 0,
-                            'err': None,
-                            'source': source,
-                            'remark': None,
-                            'collect_date': time.strftime("%Y-%m-%d %H:%M:%S", time.localtime())
-                        }
-                        mysql.insert('zixun', insert_zixun_data)
-                        insert_db_count += 1
-        end_time = time.time()
-        print(f"单次执行耗时：{end_time - start_time:.6f} 秒")
+            # zixun_list = get_spider_data(company_, ip_, execute_id, url)
+            zixun_list = []
+            try:
+                zixun_list = get_spider_data(ip_, url)
+            except Exception as e:
+                index += 1
+                # 所有网站都爬取失败
+                if index == len(website):
+                    status = 0
+                    message = f'error:{e}'
+                    select = mysql.select('proxy_log', ['fail'], f'proxy=\'{ip_}\'')
+                    fail = select[0][0]
+                    fail += 1
+                    mysql.update('proxy_log', {'fail': fail}, f'proxy=\'{ip_}\'')
+                continue
+            source_list.append(source)
+            if '百度' == source:
+                count_baidu = len(zixun_list)
+            if '搜狗' == source:
+                count_sougou = len(zixun_list)
+            if '360' == source:
+                count_360 = len(zixun_list)
+            # 数据入库
+            for data in zixun_list:
+                total_data_count += 1
+                # 数据处理
+                company = transform_company_name(company_)
+                simple_name = None
+                if data['highlight']:
+                    simple_name = get_simple_name(data['highlight'])
+                    simple_name = filter_simple_name(simple_name, company)
+                date = data['date']
+                if date:
+                    date = transform_date(date, 1)
+                # 过滤重复资讯
+                # 查询是否已存在相同URL的记录
+                url = data['url']
+                record = mysql.select('zixun', '*', 'url=\'' + url + '\'')
+                save_count = 0
+                if len(record) == 0:
+                    insert_zixun_data = {
+                        'id': str(uuid.uuid4()),
+                        'execute_id': execute_id,
+                        'company': company,
+                        'simple_name': simple_name,
+                        'title': data['title'],
+                        'author': data['author'],
+                        'date': date,
+                        'des': data['des'],
+                        'url': url,
+                        'cover': data['cover'],
+                        'flag': 0,
+                        'filter': 0,
+                        'retry': 0,
+                        'err': None,
+                        'source': source,
+                        'remark': None,
+                        'collect_date': time.strftime("%Y-%m-%d %H:%M:%S", time.localtime())
+                    }
+                    mysql.insert('zixun', insert_zixun_data)
+                    insert_db_count += 1
+                    save_count += 1
+        # 添加日志
+        zixun_log = {
+            'id': str(uuid.uuid4()),
+            'execute_id': execute_id,
+            'company': company_,
+            'status': status,
+            'message': message,
+            'source': ','.join(map(str, source_list)),
+            'use_proxy': 1 if ip_ else 0,
+            'create_date': time.strftime("%Y-%m-%d %H:%M:%S", time.localtime())
+        }
+        mysql.insert('zixun_log', zixun_log)
+        print(f'{time.strftime("%Y-%m-%d %H:%M:%S", time.localtime())}，{company_}，耗时：{time.time() - start_time:.1f}秒'
+              f' --> {message}， 数据 --> 百度：{count_baidu}， 搜狗：{count_sougou}， 360：{count_360}')
     # 更新执行记录
     spend_time = int(time.time()) - begin
     execute_data = {
@@ -100,7 +141,7 @@ if __name__ == '__main__':
     }
     mysql.update('execute_log', execute_data, 'id=\'' + execute_id + '\'')
     mysql.close()
-    print(f'\n ======================= 执行完成，{total_count}家公司，失败：{fail_count}，总数据量：{total_data_count}，'
-          f'入库：{insert_db_count}，结束时间：{time.strftime("%Y-%m-%d %H:%M:%S", time.localtime())} ====================')
+    print(f'\n ======================= 执行完成，{total_count}家公司，失败：{fail_count}，总数据量：{total_data_count}，入库：{insert_db_count}，'
+          f'耗时：{spend_time/60:.1f}分，结束时间：{time.strftime("%Y-%m-%d %H:%M:%S", time.localtime())} ====================')
     push_message('执行完成通知',
                  f'执行完成，{total_count}家公司，失败：{fail_count}，总数据量：{total_data_count}，入库：{insert_db_count}')

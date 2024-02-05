@@ -11,7 +11,7 @@ from baiduspider.utils.database import MySQL
 def get_proxy():
     mysql = MySQL()
     # 查询在有效期内的代理
-    select = mysql.select('proxy_log', ['proxy'], 'TIMESTAMPDIFF(MINUTE, create_date, NOW())<expire and status=1')
+    select = mysql.select('proxy_log', ['proxy'], 'TIMESTAMPDIFF(MINUTE, create_date, NOW())<expire and status=1 and fail<3')
     mysql.close()
     if select:
         ip_ = select[0][0]
@@ -96,6 +96,7 @@ def check_proxy(proxy_, get_time):
             'message': message,
             'source': 'https://www.xiongmaodaili.com/',
             'expire': 5,
+            'fail': 0,
             'create_date': get_time
         }
         mysql.insert('proxy_log', proxy_data)
@@ -159,6 +160,25 @@ def get_spider_data(company_, ip_, execute_id, url):
     return None
 
 
+def get_spider_data(ip_, url):
+    source = get_source(url)
+    proxy = None
+    if ip_:
+        proxy = {"http": "http://{}".format(ip_)}
+    retry_count = 3  # 重试次数
+    # 失败重试
+    while retry_count > 0:
+        try:
+            response = BaiduSpider().get_response(url, proxy)
+            # 解析html
+            parse_data = BaiduSpider().parse_html(response, source).plain
+            return parse_data
+        except Exception as e:
+            retry_count -= 1
+            if retry_count == 0:
+                raise e
+
+
 # split_ = '百度为您找到相关资讯14个'.split("资讯", 1)[-1].split("篇", 1)[0].split("个", 1)[0].split("条", 1)[0].replace(",", "")
 # split_ = '搜狗已为您找到约21,063条相关结果'.split("约", 1)[-1].split("篇", 1)[0].split("个", 1)[0].split("条", 1)[0].replace(",", "")
 # split_ = '为您推荐相关资讯约8,512条'.split("约", 1)[-1].split("篇", 1)[0].split("个", 1)[0].split("条", 1)[0].replace(",", "")
@@ -172,3 +192,5 @@ def get_spider_data(company_, ip_, execute_id, url):
 # resp = requests.get(url,headers=HEADER)
 #
 # print(resp.content.decode('utf8'))
+
+# print(check_proxy('123.245.249.128:14836', time.strftime("%Y-%m-%d %H:%M:%S", time.localtime())))

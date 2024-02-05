@@ -940,11 +940,14 @@ class Parser(BaseSpider):
                 # 链接
                 url = res.find("a")["href"]
                 # 简介
-                des = (
-                    res.find("div", class_="g-figure-caption")
-                    .find("p", class_="summary")
-                    .text
-                )
+                try:
+                    des = (
+                        res.find("div", class_="g-figure-caption")
+                        .find("p", class_="summary")
+                        .text
+                    )
+                except Exception:
+                    des = None
                 # 作者
                 try:
                     author = (

@@ -13,13 +13,8 @@ EXCEL_PAHT = 'D:/work/spider/企业名称.xlsx'
 READ_COLUMN = '企业名称'
 
 # 熊猫代理
-URL_PROXY = 'http://route.xiongmaodaili.com/xiongmao-web/api/glip?' \
-            'secret=351c271365f514b36e71004731706ec7&' \
-            'orderNo=GL20240130102547J610iY4D&' \
-            'count=1&' \
-            'isTxt=0&' \
-            'proxyType=1&' \
-            'returnAccount=1'
+URL_PROXY = 'http://route.xiongmaodaili.com/xiongmao-web/api/glip?secret=351c271365f514b36e71004731706ec7' \
+            '&orderNo=GL20240130102547J610iY4D&count=1&isTxt=0&proxyType=1&returnAccount=1'
 
 # 消息推送地址
 URL_PUSH = 'https://www.pushplus.plus/send/'

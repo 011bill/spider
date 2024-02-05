@@ -28,7 +28,7 @@ CREATE TABLE IF NOT EXISTS zixun (
     author VARCHAR(50) COMMENT '作者',
     date VARCHAR(50) COMMENT '发布日期',
     des TEXT COMMENT '描述',
-    url VARCHAR(255) COMMENT '详情链接',
+    url VARCHAR(500) COMMENT '详情链接',
     cover VARCHAR(500) COMMENT '封面图',
     flag VARCHAR(2) COMMENT '详情是否已爬（0否，1是）',
     filter VARCHAR(1) COMMENT '是否过滤/是否爬详情（0否，1是）',
@@ -58,7 +58,7 @@ CREATE TABLE IF NOT EXISTS execute_log (
   fail int COMMENT '失败条数',
   data_count int COMMENT '总爬取数据条数',
   save_count int COMMENT '入库数据条数',
-  spend_time int COMMENT '耗时',
+  spend_time int COMMENT '耗时（秒）',
   remark varchar(255) COMMENT '备注'
 );
 CREATE TABLE IF NOT EXISTS proxy_log (
