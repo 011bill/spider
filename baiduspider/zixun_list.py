@@ -68,6 +68,7 @@ if __name__ == '__main__':
                     fail = select[0][0]
                     fail += 1
                     mysql.update('proxy_log', {'fail': fail}, f'proxy=\'{ip_}\'')
+                    fail_count += 1
                 continue
             source_list.append(source)
             if '百度' == source:

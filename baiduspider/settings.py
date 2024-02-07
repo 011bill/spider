@@ -9,7 +9,7 @@ DB_CONFIG = {
 
 # excel路径
 # EXCEL_PAHT = 'D:/work/spider/企业信息20240123.xlsx'
-EXCEL_PAHT = 'D:/work/spider/企业名称.xlsx'
+EXCEL_PAHT = 'D:/work/spider/企业信息20240123.xlsx'
 READ_COLUMN = '企业名称'
 
 # 熊猫代理

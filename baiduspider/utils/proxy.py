@@ -179,12 +179,8 @@ def get_spider_data(ip_, url):
                 raise e
 
 
-# split_ = '百度为您找到相关资讯14个'.split("资讯", 1)[-1].split("篇", 1)[0].split("个", 1)[0].split("条", 1)[0].replace(",", "")
-# split_ = '搜狗已为您找到约21,063条相关结果'.split("约", 1)[-1].split("篇", 1)[0].split("个", 1)[0].split("条", 1)[0].replace(",", "")
-# split_ = '为您推荐相关资讯约8,512条'.split("约", 1)[-1].split("篇", 1)[0].split("个", 1)[0].split("条", 1)[0].replace(",", "")
-# print(split_)
-
-# get_spider_data('丹华水利环境技术（上海）有限公司', None, '', f'http://news.so.com/ns?j=0&rank=pdate&src=sort_time&scq=&q={quote("丹华水利环境技术（上海）有限公司")}')
+# get_spider_data('丹华水利环境技术（上海）有限公司', None, '',
+#                 f'http://news.so.com/ns?j=0&rank=pdate&src=sort_time&scq=&q={quote("丹华水利环境技术（上海）有限公司")}')
 # get_spider_data('联想（上海）计算机科技有限公司', None, '',
 #                 f'http://www.sogou.com/sogou?interation=1728053249&interV=&pid=sogou-wsse-8f646834ef1adefa&page=1&ie=utf8&query={quote("联想（上海）计算机科技有限公司")}')
 
@@ -194,3 +190,8 @@ def get_spider_data(ip_, url):
 # print(resp.content.decode('utf8'))
 
 # print(check_proxy('123.245.249.128:14836', time.strftime("%Y-%m-%d %H:%M:%S", time.localtime())))
+
+# proxy = {"http": "http://{}".format('42.177.116.235:12882')}
+# response = BaiduSpider().get_response(f'http://news.so.com/ns?j=0&rank=pdate&src=sort_time&scq=&q={quote("丹华水利环境技术（上海）有限公司")}',
+#                                       proxy)
+# print(response)
